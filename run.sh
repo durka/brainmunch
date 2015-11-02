@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-time multirust ru nightly cargo run
+time RUST_MIN_STACK=16777216 multirust ru nightly cargo run
 

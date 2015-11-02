@@ -1,0 +1,593 @@
+#![recursion_limit="5000"]
+//#![feature(trace_macros)] trace_macros!(true);
+
+macro_rules! bf {
+    // these rules handle the end of the instruction stream -- either the real end of the program,
+    // or the end of a loop body
+    
+    // no loop stack and no tail stack => goodbye
+    (@run ()
+     [$cur_:tt $left_:tt $right_:tt]
+     [] [] []
+     $out_:tt $_in:tt
+    ) => {
+        bf!(@out
+            $cur_ [] $left_ $right_
+            $out_
+           )
+    };
+
+    // counter is zero, pop the loop stack to exit the loop
+    (@run ()
+     [[] $left_:tt $right_:tt]
+     [] [$loops_head:tt $($loops_tail:tt)*] [[$head:tt $($tail:tt)*] $($tails_:tt)*]
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[] $left_ $right_]
+            [$($tail)*] [$($loops_tail)*] [$($tails_)*]
+            $out_ $in_
+           )
+    };
+
+    // counter is nonzero, restart the loop
+    (@run ()
+     $state_:tt
+     [] [[$head:tt $($tail:tt)*] $($loops:tt)*] $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            $state_
+            [$($tail)*] [[$head $($tail)*] $($loops)*] $tails_
+            $out_ $in_
+           )
+    };
+
+    // the next few rules deal with multi-character tokens which are parsed together, but we want
+    // the individual tokens, so just split them up and push the pieces back onto the program
+
+    // >> is actually > >
+    (@run >>
+     $state_:tt
+     [$($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run >
+            $state_
+            [> $($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    // << is actually < <
+    (@run <<
+     $state_:tt
+     [$($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run <
+            $state_
+            [< $($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    // .. is actually . .
+    (@run ..
+     $state_:tt
+     [$($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run .
+            $state_
+            [. $($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    // ... is actually . . .
+    (@run ...
+     $state_:tt
+     [$($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run .
+            $state_
+            [. . $($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    // <- is actually < -
+    (@run <-
+     $state_:tt
+     [$($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run <
+            $state_
+            [- $($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    // -> is actually - >
+    (@run ->
+     $state_:tt
+     [$($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run -
+            $state_
+            [> $($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+
+    // now the instructions themselves!
+    
+    // add one to the current cell (overflow is a no-op)
+    (@run +
+     [[() () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+       () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+       () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+       () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+       () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+       () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+       () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+       () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()]
+      $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[() () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+              () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+              () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+              () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+              () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+              () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+              () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()
+              () () () () () () () () () () () () () () () () () () () () () () () () () () () () () () ()]
+             $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+
+    (@run +
+     [[$($cur:tt)*] $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[$($cur)* ()] $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    
+    // subtract one from the current cell (underflow is a no-op)
+    (@run -
+     [[] $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[] $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+
+    (@run -
+     [[$chead:tt $($ctail:tt)*] $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[$($ctail)*] $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    
+    // move the cell pointer to the right
+    // the memory expands if necessary (new cell initialized to zero)
+    (@run >
+     [$cur:tt [$($lmore:tt)*] [$right:tt $($rmore:tt)*]]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [$right [$cur $($lmore)*] [$($rmore)*]]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+
+    (@run >
+     [$cur:tt [$($lmore:tt)*] []]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[] [$cur $($lmore)*] []]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    
+    // move the cell pointer to the left
+    // the memory expands if necessary (new cell initialized to zero)
+    (@run <
+     [$cur:tt [$left:tt $($lmore:tt)*] [$($rmore:tt)*]]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [$left [$($lmore)*] [$cur $($rmore)*]]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+
+    (@run <
+     [$cur:tt [] [$($rmore:tt)*]]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[] [] [$cur $($rmore)*]]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    
+    // loops!
+    
+
+    // special case for [-]
+    (@run [-]
+     [[$($cur:tt)*] $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[] $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+    
+    // counter is zero, skip the loop
+    (@run [$inner_head:tt $($inner_tail:tt)*]
+     [[] $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            [[] $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+
+    // counter is nonzero, push the current tail + loop and enter the loop
+    (@run [$inner_head:tt $($inner_tail:tt)*]
+     $state_:tt
+     $tail_:tt [$($loops:tt)*] [$($tails:tt)*]
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $inner_head
+            $state_
+            [$($inner_tail)* ()] [[$inner_head $($inner_tail)* ()] $($loops)*] [$tail_ $($tails)*]
+            $out_ $in_
+           )
+    };
+    
+    // output the current cell: just push $cur onto $out
+    //  note: the Rust "program" will crash at runtime if the BF program outputs invalid UTF-8
+    (@run .
+     [$cur:tt $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     [$($out:tt)*] $in_:tt
+    ) => {
+        bf!(@run $head
+            [$cur $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            [$($out)* $cur] $in_
+           )
+    };
+
+    // input to the current cell: do nothing on EOF, otherwise pop $in and parse it
+    (@run ,
+     [$cur:tt $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt []
+    ) => {
+        bf!(@run $head
+            [$cur $left_ $right_]
+            [$($tail)*] $loops_ $tails_
+            $out_ []
+           )
+    };
+    (@run ,
+     [$cur:tt $left_:tt $right_:tt]
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt [$in_head:tt $($in_tail:tt)*]
+    ) => {
+        bf!(@in @revconv
+            $in_head []
+            [[$head $left_ $right_] [[$($tail)*] $loops_ $tails_ $out_ [$($in_tail)*]]]
+           )
+    };
+
+    // input helper subroutine for converting from decimal to zermelo
+    // step 1 "revconv": reverse the digits and convert them to zermelo
+    // step 2 "unary": iterate through the digits and construct a unary number
+    (@in @revconv
+     [] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @unary
+            [] [] [()] [$($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [0 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [() $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [1 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [(()) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [2 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [((())) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [3 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [(((()))) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [4 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [((((())))) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [5 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [(((((()))))) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [6 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [((((((())))))) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [7 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [(((((((()))))))) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [8 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [((((((((())))))))) $($digit)*]
+            $stuff
+           )
+    };
+    (@in @revconv
+     [9 $($tail:tt)*] [$($digit:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @revconv
+            [$($tail)*] [(((((((((()))))))))) $($digit)*]
+            $stuff
+           )
+    };
+
+    // how step 2 works:
+    // - $fullacc is the number being built up, $digitacc is used within digits (both are unary numbers)
+    // - $pv is the place value counter, multiplied by 10 each iteration
+    // - within a digit, count down the zermelo layers and inc $digitacc by $pv
+    // - at the end of a digit, just add $digitacc to $fullacc (and multiply $pv by 10)
+    (@in @unary
+     $fullacc:tt $digitacc:tt $pv:tt []
+     [[$head:tt $left:tt $right:tt] [$($other_stuff:tt)*]]
+    ) => {
+        bf!(@run $head
+            [$fullacc $left $right]
+            $($other_stuff)*
+           )
+    };
+    (@in @unary
+     [$($fullacc:tt)*] [$($digitacc:tt)*] [$($pv:tt)*] [() $($digits:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @unary
+            [$($fullacc)* $($digitacc)*] [] [$($pv)* $($pv)* $($pv)* $($pv)* $($pv)*
+                                             $($pv)* $($pv)* $($pv)* $($pv)* $($pv)*] [$($digits)*]
+            $stuff
+           )
+    };
+    (@in @unary
+     $fullacc:tt [$($digitacc:tt)*] [$($pv:tt)*] [($digit:tt) $($digits:tt)*]
+     $stuff:tt
+    ) => {
+        bf!(@in @unary
+            $fullacc [$($digitacc)* $($pv)*] [$($pv)*] [$digit $($digits)*]
+            $stuff
+           )
+    };
+
+    // invalid instruction is a no-op
+    (@run $_instr:tt
+     $state_:tt
+     [$head:tt $($tail:tt)*] $loops_:tt $tails_:tt
+     $out_:tt $in_:tt
+    ) => {
+        bf!(@run $head
+            $state_
+            [$($tail)*] $loops_ $tails_
+            $out_ $in_
+           )
+    };
+
+    // the program is over! we now output the memory state and the output to Rust
+    // first we need to unzip the memory, which involves reversing the left-hand side
+
+    // the reversal is finished: convert each memory cell and output character to arithmetic and
+    // output them into arrays, also generate the profile shim
+    (@out
+     $cur:tt [$($left:tt)*] [] [$($right:tt)*]
+     [$($out:tt)*]
+    ) => {
+        Machine {
+            memory: CambridgeArray(&[$(bf!(@count $left),)* bf!(@count $cur), $(bf!(@count $right),)*]),
+            output: UTF8Wrapper(&[$(bf!(@count $out),)*]),
+        }
+    };
+    // reverse the left-hand side of the memory zipper for output
+    (@out
+     $cur_:tt [$($left_:tt)*] [$left_head:tt $($left_tail:tt)*] $right_:tt
+     $out_:tt
+    ) => {
+        bf!(@out
+            $cur_ [$left_head $($left_)*] [$($left_tail)*] $right_
+            $out_
+           )
+    };
+    
+    // unconditionally replace a tt with a given expression
+    (@replace $_from:tt $to:expr) => { $to };
+
+    // convert a unary number to an arithmetic expression
+    (@count [$($thing:tt)*]) => { (0u8 $(+ bf!(@replace $thing 1u8))*) };
+
+    // entry point: given a sequence of instructions, launch the machine
+    ({$head:tt $($tail:tt)*} {$($input:tt)*}) => { bf!(@run $head
+    //                                                      ^ current instruction
+                                                       [[] [] []]
+    //                                                 ^ memory zipper [cur [left cells, adjacent first] [right cells, adjacent first]]
+                                                       [$($tail)* ()] [] []
+    //                                                  |         |   |  ^ tail stack
+    //                                                  |         |   ^ loop stack
+    //                                                  |         ^ sentinel added to mark the end of the program
+    //                                                  ^ remainder of program
+                                                       [] [$($input)*]
+    //                                                 |  ^ unparsed input
+    //                                                 ^ output
+                                                      )
+    }
+}
+
+use std::{fmt, str};
+
+#[derive(Debug)]
+struct Machine<'a> {
+    memory: CambridgeArray<'a, u8>,
+    output: UTF8Wrapper<'a>,
+}
+
+struct CambridgeArray<'a, T: 'a>(&'a [T]); // Cambridge is Oxford's rival
+struct UTF8Wrapper<'a>(&'a [u8]);
+
+impl<'a, T: fmt::Display> fmt::Debug for CambridgeArray<'a, T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(f, "["));
+        if self.0.len() > 0 {
+            for e in &self.0[1..] {
+                try!(write!(f, " {}", e));
+            }
+        }
+        write!(f, " ]")
+    }
+}
+impl<'a> fmt::Debug for UTF8Wrapper<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "\n{}", try!(str::from_utf8(self.0).map_err(|_| fmt::Error)))
+    }
+}
+
+
+// TODO
+// - change profiling to use individual counters, for speed
+// - examine decisions for EOF and underflow/overflow wrapping
+// - make things (profiling, EOF, wrapping) configurable using something like CPP
+// - test all #ifdef configurations
+// - use CPP to generate rules? cheating?
+
+// the BF program is interpreted by the macro system at compile time and turned into a constant arithmetic expression (see expanded.rs)
+// example run: unifdef -t -UPROFILE bf.rs.pre >bf.rs; [ $? != 2 ] && time RUST_MIN_STACK=16777216 mr ru nightly cargo run --bin bf
+const MACHINE: Machine<'static> =
+    bf!({ // incrementing cat
+        first some useless instructions to exercise the profiler
+            this one triggers an overflow: +++++[>+++<-]>[>+++++ +++++ +++++ ++<-]>+
+            this one triggers an underflow: >-
+            now grow the memory in both directions: <<<<<>>>>>
+        here is the real program
+            ,[+.[-],]
+        one last useless eof: ,
+    } {
+        [6 4]   [6 5]   [6 6]   [6 7]
+        [6 8]   [6 9]   [7 0]   [7 1]
+        [7 2]   [7 3]   [7 4]   [7 5]
+        [7 6]   [7 7]   [7 8]   [7 9]
+        [8 0]   [8 1]   [8 2]   [8 3]
+        [8 4]   [8 5]   [8 6]   [8 7]
+        [8 8]   [8 9]   [9 6]   [9 7]
+        [9 8]   [9 9]   [1 0 0] [1 0 1]
+        [1 0 2] [1 0 3] [1 0 4] [1 0 5]
+        [1 0 6] [1 0 7] [1 0 8] [1 0 9]
+        [1 1 0] [1 1 1] [1 1 2] [1 1 3]
+        [1 1 4] [1 1 5] [1 1 6] [1 1 7]
+        [1 1 8] [1 1 9] [1 2 0] [1 2 1]
+        [4 7]   [4 8]   [4 9]   [5 0]
+        [5 1]   [5 2]   [5 4]   [5 5]
+        [5 6]
+    });
+    //bf!({ ++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>. } {}); // hello world
+    //bf!({ + } { });
+    //bf!({ ,------------------------------------------------>,------------------------------------------------<[>[- >>>>>>>>>> >+>+<< <<<<<<<<<<]>>>>>>>>>> >>[-<< <<<<<<<<<<+>>>>>>>>>> >>]<[<<<<<<<<<< <> ++++++ [ > +++++++ < - ] > . [-] <<>>>>>>>>>> >-]<<<<<<<<<< <> +++++ [ > ++ < - ] > . [-] <<<-] } { [5 0] [5 0] }); // draw a rectangle (credit: Aceeri on #rust)
+    //bf!({ ,>,<[>[- >>>>>>>>>> >+>+<< <<<<<<<<<<]>>>>>>>>>> >>[-<< <<<<<<<<<<+>>>>>>>>>> >>]<[<<<<<<<<<< <> ++++++ [ > +++++++ < - ] > . [-] <<>>>>>>>>>> >-]<<<<<<<<<< <> +++++ [ > ++ < - ] > . [-] <<<-] } { [3] [2] }); // draw a rectangle (modified to take integers instead of ASCII)
+    //bf!({ +++>++  <[>[- >>>>>>>>>> >+>+<< <<<<<<<<<<]>>>>>>>>>> >>[-<< <<<<<<<<<<+>>>>>>>>>> >>]<[<<<<<<<<<< <> ++++++ [ > +++++++ < - ] > . [-] <<>>>>>>>>>> >-]<<<<<<<<<< <> +++++ [ > ++ < - ] > . [-] <<<-] } { }); // draw a rectangle (modified to set the first two tape entries instead of taking input)
+
+fn main() {
+    // all we do at runtime is print the memory state and the output (converted to UTF-8)
+    println!("{:#?}", MACHINE);
+}
