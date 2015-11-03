@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
 
-time RUST_MIN_STACK=16777216 multirust ru nightly cargo run --release
+MODE="--release"
+if [ "$1" = "--debug" ]; then
+    MODE=
+fi
+
+time RUST_MIN_STACK=16777216 multirust ru nightly cargo run $MODE
 
