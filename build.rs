@@ -1,15 +1,41 @@
 use std::process::Command;
-use std::fs::File;
-use std::io::Write;
+use std::env;
+use std::fs::{File, read_dir};
+use std::path::Path;
+use std::collections::HashMap;
+use std::io::prelude::*;
+
+static FEATURES: &'static [&'static str] = &["PROFILE"];
 
 fn main() {
+    unifdef_walk(detect_features());
+}
+
+fn unifdef_file(file: &Path, features: &HashMap<String, bool>) {
     Command::new("unifdef")
             .arg("-t")
-            .arg("-UPROFILE")
-            .arg("src/bf.rs.pre")
+            .args(&features.iter()
+                           .map(|(s, &b)| format!("-{}{}", if b { "D" } else { "U" },
+                                                          s))
+                           .collect::<Vec<_>>())
+            .arg(file)
             .output()
-            .and_then(|o| File::create("src/bf.rs")
-                      .and_then(|mut f| f.write_all(&o.stdout)))
+            .and_then(|o| File::create(file.with_file_name(file.file_stem().unwrap()))
+                               .and_then(|mut f| f.write_all(&o.stdout)))
             .unwrap();
+}
+
+fn unifdef_walk(features: HashMap<String, bool>) {
+    for de in read_dir("src/").unwrap()
+                             .filter_map(Result::ok)
+                             .filter(|de| de.path().extension().map(|s| s == "pre") == Some(true)) {
+        unifdef_file(&de.path(), &features);
+    }
+}
+
+fn detect_features() -> HashMap<String, bool> {
+    FEATURES.iter()
+            .map(|f| ((*f).to_owned(), env::var(format!("CARGO_FEATURE_{}", f)).is_ok()))
+            .collect()
 }
 
