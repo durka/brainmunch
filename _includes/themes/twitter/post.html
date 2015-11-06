@@ -5,7 +5,11 @@
 <div class="row-fluid post-full">
   <div class="span12">
     <div class="date">
-      <span>{{ page.date | date_to_long_string }}</span>
+        <span>
+            {{ page.date | date: "%A, %B" }}
+            {% assign d = page.date | date: "%-d"  %}
+            {{ d }}<sup>{% case d %}{% when '1' or '21' or '31' %}st{% when '2' or '22' %}nd{% when '3' or '23' %}rd{% else %}th{% endcase %}</sup>{{ page.date | date: ", %Y" }}
+        </span>
     </div>
     <div class="content">
       {{ content }}
