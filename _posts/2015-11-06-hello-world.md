@@ -11,9 +11,5 @@ Okay, back to the beginning. My name is Alex and I'm a robotics graduate student
 
 Unsurprisingly Rust crept into my side projects as well. Coming from a bit of a Lisp (actually Clojure) background, I was excited to hear that Rust had a macro system, though I was a bit disappointed by its limitations. On the other hand, they say restrictions breed creativity.
 
-This project is my largest and most recursive macro to date, by far. It tricks ```rustc``` into interpreting a Brainfuck program during the macro-expansion phase. The Brainfuck program is given in the usual syntax, and input can be provided using modified decimal literals. The interpreter's output is a few arrays of trivial arithmetic expressions (e.g. {% ihighlight rust %}1u8 + 1u8{% endihighlight %}) which are printed at Rust runtime.
-
-{% highlight rust %}
-fn foo<T, U>(x: i32) -> u32 {}
-{% endhighlight %}
+This project is my largest and most recursive macro to date, by far. It tricks `rustc` into interpreting a Brainfuck program during the macro-expansion phase. The Brainfuck program is given in the usual syntax, and input can be provided using modified decimal literals. The interpreter's output is a few arrays of trivial arithmetic expressions (e.g. {% ihighlight rust %}1u8 + 1u8{% endihighlight %}) which are printed at Rust runtime.
 
