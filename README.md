@@ -1,2 +1,2 @@
-Rust macro that implements a Brainfuck interpreter (not just a translator) at macro-expansion time. Explanatory blog posts forthcoming.
+Rust macro that implements a Brainfuck interpreter (not a translator) at macro-expansion time. Explanatory blog posts forthcoming.
 
