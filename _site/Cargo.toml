@@ -1,9 +1,0 @@
-[package]
-authors = ["Alex Burka"]
-name = "bf"
-version = "0.1.0"
-build = "build.rs"
-
-[features]
-profile = []
-
