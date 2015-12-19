@@ -1,8 +1,10 @@
 [package]
-authors = ["Alex Burka"]
+authors = ["Alex Burka <rust@alexburka.com>"]
 name = "bf"
 version = "0.1.0"
 build = "build.rs"
+
+license = "MIT"
 
 [features]
 profile = []
