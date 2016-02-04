@@ -455,7 +455,7 @@ macro_rules! bf {
            )
     };
 
-    // input helper subroutine for converting from decimal to zermelo
+    // input helper subroutine for converting from decimal to unary
     // step 1 "revconv": reverse the digits and convert them to zermelo
     // step 2 "unary": iterate through the digits and construct a unary number
     (@in @revconv
