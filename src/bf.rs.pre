@@ -357,7 +357,7 @@ macro_rules! bf {
             [$($tail)*] $loops_ $tails_
             $out_ $in_
 #ifdef PROFILE
-            [$($prof_var)* instructions=1 clears=1 decrements=[$($cur),*].len() as u32]
+            [$($prof_var)* instructions=[$($cur),*].len() as u32 clears=1 decrements=[$($cur),*].len() as u32]
 #endif
            )
     };
