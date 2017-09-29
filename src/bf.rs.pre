@@ -711,11 +711,14 @@ macro_rules! bf {
             memory: types::CambridgeArray(&[$(bf!(@count $left),)* bf!(@count $cur), $(bf!(@count $right),)*]),
             output: types::UTF8Wrapper(&[$(bf!(@count $out),)*]),
 #ifdef PROFILE
-            trace:  types::ProfileShim(&|| {
-                let mut p = types::Profile::default();
-                $(p.$prof_var += $prof_expr;)*
-                p
-            }),
+            trace:  {
+                fn profile() -> types::Profile {
+                    let mut p = types::Profile::default();
+                    $(p.$prof_var += $prof_expr;)*
+                    p
+                }
+                types::ProfileShim(profile)
+            },
 #endif
         }
     };

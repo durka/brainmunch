@@ -5,14 +5,14 @@ pub struct Machine<'a> {
     pub memory: CambridgeArray<'a, u8>,
     pub output: UTF8Wrapper<'a>,
 #ifdef PROFILE
-    pub trace:  ProfileShim<'a>,
+    pub trace:  ProfileShim,
 #endif
 }
 
 pub struct CambridgeArray<'a, T: 'a>(pub &'a [T]); // Cambridge is Oxford's rival
 pub struct UTF8Wrapper<'a>(pub &'a [u8]);
 #ifdef PROFILE
-pub struct ProfileShim<'a>(pub &'a Fn() -> Profile);
+pub struct ProfileShim(pub fn() -> Profile);
 #endif
 
 impl<'a, T: fmt::Display> fmt::Debug for CambridgeArray<'a, T> {
@@ -44,7 +44,7 @@ pub struct Profile {
     pub noops: u32,
 }
 
-impl<'a> fmt::Debug for ProfileShim<'a> {
+impl fmt::Debug for ProfileShim {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(&self.0(), f)
     }
