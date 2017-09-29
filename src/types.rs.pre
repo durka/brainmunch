@@ -19,7 +19,7 @@ impl<'a, T: fmt::Display> fmt::Debug for CambridgeArray<'a, T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         try!(write!(f, "["));
         if self.0.len() > 0 {
-            for e in &self.0[1..] {
+            for e in &self.0[..] {
                 try!(write!(f, " {}", e));
             }
         }
