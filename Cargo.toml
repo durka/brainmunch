@@ -9,3 +9,7 @@ license = "MIT"
 [features]
 profile = []
 
+[[bin]]
+name = "demo"
+path = "src/demo.rs"
+

@@ -7,7 +7,7 @@ mod types;
 // the BF program is interpreted by the macro system at compile time and turned into a constant arithmetic expression (see expanded.rs)
 // example run: unifdef -t -UPROFILE bf.rs.pre >bf.rs; [ $? != 2 ] && time RUST_MIN_STACK=16777216 mr ru nightly cargo run --bin bf
 const MACHINE: types::Machine<'static> =
-    bf!({ // incrementing cat
+    /*bf!({ // incrementing cat
         first some useless instructions to exercise the profiler
             this one triggers an overflow: +++++[>+++<-]>[>+++++ +++++ +++++ ++<-]>+
             this one triggers an underflow: >-
@@ -32,8 +32,20 @@ const MACHINE: types::Machine<'static> =
         [4 7]   [4 8]   [4 9]   [5 0]
         [5 1]   [5 2]   [5 4]   [5 5]
         [5 6]
-    });
+    });*/
     //bf!({ ++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++.>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.>. } {}); // hello world
+    bf!({ // hello $input!
+        ++++++++++                        $0 = 10
+        [>+++++++>++++++++++>+++>+<<<<-]  ($1, $2, $3, $4) = (70, 100, 30, 10)
+        >++.>+.+++++++..+++.>++           output "Hello "
+        [.[-],]                           cat input
+        >[>+++<-]>+++.                    output "!"
+    } {
+        [8 2] [1 1 7] [1 1 5] [1 1 6] [7 0] [1 0 1] [1 1 5] [1 1 6] // R u s t F e s t
+        [3 2] // space
+        [9 0] [1 9 5] [1 8 8] [1 1 4] [1 0 5] [9 9] [1 0 4] // Z ü r i c h
+    });
+    //bf!({ ++[>++[>++<-].<-] } { }); // nested loop test
     //bf!({ + } { });
     //bf!({ ,------------------------------------------------>,------------------------------------------------<[>[- >>>>>>>>>> >+>+<< <<<<<<<<<<]>>>>>>>>>> >>[-<< <<<<<<<<<<+>>>>>>>>>> >>]<[<<<<<<<<<< <> ++++++ [ > +++++++ < - ] > . [-] <<>>>>>>>>>> >-]<<<<<<<<<< <> +++++ [ > ++ < - ] > . [-] <<<-] } { [5 0] [5 0] }); // draw a rectangle (credit: Aceeri on #rust)
     //bf!({ ,>,<[>[- >>>>>>>>>> >+>+<< <<<<<<<<<<]>>>>>>>>>> >>[-<< <<<<<<<<<<+>>>>>>>>>> >>]<[<<<<<<<<<< <> ++++++ [ > +++++++ < - ] > . [-] <<>>>>>>>>>> >-]<<<<<<<<<< <> +++++ [ > ++ < - ] > . [-] <<<-] } { [3] [2] }); // draw a rectangle (modified to take integers instead of ASCII)
