@@ -13,3 +13,6 @@ profile = []
 name = "demo"
 path = "src/demo.rs"
 
+[build-dependencies]
+foreman = "0.4"
+
