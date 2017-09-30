@@ -20,15 +20,21 @@ fn unifdef_file(file: &Path, features: &HashMap<String, bool>) {
                            .collect::<Vec<_>>())
             .arg(file)
             .output()
-            .and_then(|o| File::create(file.with_file_name(file.file_stem().unwrap()))
+            .and_then(|o| File::create(file.with_file_name(file.file_name().unwrap()
+                                                               .to_string_lossy()
+                                                               .replace(".pre.rs", ".rs")))
                                .and_then(|mut f| f.write_all(&o.stdout)))
             .unwrap();
 }
 
 fn unifdef_walk(features: HashMap<String, bool>) {
     for de in read_dir("src/").unwrap()
-                             .filter_map(Result::ok)
-                             .filter(|de| de.path().extension().map(|s| s == "pre") == Some(true)) {
+                              .filter_map(Result::ok)
+                              .filter(|de| de.path()
+                                             .file_name()
+                                             .map(|s| s.to_string_lossy()
+                                                       .ends_with(".pre.rs"))
+                                             == Some(true)) {
         unifdef_file(&de.path(), &features);
     }
 }
