@@ -1,0 +1,3 @@
+[build]
+rustc = "./time_rustc.sh"
+

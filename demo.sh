@@ -6,5 +6,5 @@ if [ "$1" = "--debug" ]; then
     MODE=
 fi
 
-time RUST_MIN_STACK=16777216 cargo +nightly run --bin demo $MODE "$@"
+RUST_MIN_STACK=16777216 cargo +nightly run --bin demo $MODE "$@"
 
